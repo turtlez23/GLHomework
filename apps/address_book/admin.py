@@ -1,3 +1,6 @@
 from django.contrib import admin
 
-# Register your models here.
+from apps.address_book.models import AddressEntry, FavouriteEntry
+
+admin.site.register(AddressEntry)
+admin.site.register(FavouriteEntry)
