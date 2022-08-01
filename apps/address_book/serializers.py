@@ -1,8 +1,10 @@
+from django.contrib.auth.models import User
+
 from rest_framework import serializers
 
 from apps.address_book.models import AddressEntry, FavouriteEntry
-from django.contrib.auth.models import User
   
+
 class AddressEntrySerializer(serializers.ModelSerializer):
   """Address entry serializer with extra params:
   add_to_favourite - check if address entry has to save to favourite db table.
@@ -11,9 +13,9 @@ class AddressEntrySerializer(serializers.ModelSerializer):
 
   class Meta:
     model = AddressEntry
-    # fields = ('name', 'lastname', 'middlename', 'nickname', 'phone', 'mobile_phone', 'email', 'company', 'position', 'added_by', 'addToFavourite')
     fields = '__all__'
   
+
 class FavouriteEntrySerializer(serializers.ModelSerializer):
   """Favourite entry serializer
   """
@@ -33,6 +35,7 @@ class UserDataSerializer(serializers.ModelSerializer):
 			'date_joined': {'read_only': True}
     }
 
+
 class PasswordSerializer(serializers.ModelSerializer):
 	"""Serializer webservices - User - edycja hasła użytkownika
 	Pozwala na walidację, organizację przesyłanych danych oraz komunikaty zwrotne dla webservices
@@ -45,6 +48,6 @@ class PasswordSerializer(serializers.ModelSerializer):
 		model = User
 		fields = ('password', 'oldPassword')
 		extra_kwargs = {
-            'password': {'write_only': True},
-            'oldPassword': {'write_only': True}
-        }
+      'password': {'write_only': True},
+      'oldPassword': {'write_only': True}
+    }

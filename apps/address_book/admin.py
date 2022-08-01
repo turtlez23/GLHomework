@@ -10,13 +10,3 @@ admin.site.index_title = "Address book"
 # Register admin pages for models
 admin.site.register(AddressEntry)
 admin.site.register(FavouriteEntry)
-
-
-
-
-
-# # delete all private entries
-# FavouriteEntry.objects.all().filter(user=request.user, address_entry__share=AddressEntry.PRIVATE_SHARE).delete()
-
-# # change user owner to None
-# FavouriteEntry.objects.all().filter(user=request.user, address_entry__share=AddressEntry.PUBLIC_SHARE).update(user=None)

@@ -24,8 +24,7 @@ SECRET_KEY = 'django-insecure-!%#-qh^4+^%rr8z2p#9d%mt4*%h7xee--%4cqyvjygieh)rm=0
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 # Application definition
 
@@ -40,7 +39,6 @@ INSTALLED_APPS = [
     'django_extensions',
     'rest_framework',
     'apps.address_book',
-    # 'webpack_loader',
 ]
 
 MIDDLEWARE = [
@@ -54,7 +52,6 @@ MIDDLEWARE = [
     'apps.address_book.logger.SqlLogsMiddleware',
     'apps.address_book.logger.ErrorLogsMiddleware',    
 ]
-
 
 ROOT_URLCONF = 'django_project.urls'
 
@@ -74,9 +71,6 @@ TEMPLATES = [
         },
     },
 ]
-
-# WSGI_APPLICATION = 'django_project.wsgi.application'
-
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
@@ -137,17 +131,6 @@ MEDIA_URL = '/media/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# WEBPACK_LOADER = {
-#     'DEFAULT': {
-#         'CACHE': False,
-#         'BUNDLE_DIR_NAME': 'webpack_bundles/',
-#         'STATS_FILE': BASE_DIR.joinpath('vue_project', 'webpack-stats.json'), 
-#         'POLL_INTERVAL': 0.1,  
-#         'TIMEOUT': None, 
-#         'IGNORE': [r'.+\.hot-update.js', r'.+\.map'], 
-#     }
-# }
-
 REST_FRAMEWORK = {
     # 'DEFAULT_RENDERER_CLASSES': (
     #     'rest_framework.renderers.JSONRenderer',
@@ -162,10 +145,10 @@ REST_FRAMEWORK = {
     ]
 }
 
+# CUSTOM SETTINGS
 # APPS CONFIGURATION
 ADDRESS_BOOK_TITLE = 'Address book'
 ABOUT_PAGE_TITLE = 'About adddress book'
-
 
 #LOGGER PARAMS
 LOGS_DIRECTORY_PATH = BASE_DIR.joinpath('logs')

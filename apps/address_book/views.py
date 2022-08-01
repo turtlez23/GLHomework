@@ -2,28 +2,26 @@ from typing import Dict, Any
 
 from django.conf import settings
 from django.shortcuts import render
+from django.core.exceptions import ValidationError
 from django.views.generic import TemplateView
-from rest_framework.response import Response
+from django_filters.rest_framework import DjangoFilterBackend
+from django.db.transaction import atomic
+from django.db.models import Q
+from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.hashers import make_password
 
+from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.filters import OrderingFilter, BaseFilterBackend
-from django_filters.rest_framework import DjangoFilterBackend
 
 from apps.address_book.models import AddressEntry, FavouriteEntry
 from apps.address_book.serializers import AddressEntrySerializer, FavouriteEntrySerializer, UserDataSerializer, PasswordSerializer
 
-from django.db.transaction import atomic
-
-from rest_framework import status
-from django.db.models import Q
-
-from django.contrib.auth.models import User
-from rest_framework.decorators import action
-from django.contrib.auth.password_validation import validate_password
-from django.contrib.auth.hashers import make_password
-from django.core.exceptions import ValidationError
-from rest_framework.authentication import SessionAuthentication, BasicAuthentication
-from rest_framework.permissions import IsAuthenticated
 
 def home_page(request):
   """Home page view implemented by method with request param
