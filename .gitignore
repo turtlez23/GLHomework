@@ -6,6 +6,9 @@ ZadanieGlobalLogic.code-workspace
 node_modules
 /dist
 
+#Djando migrations
+**/migrations/*
+
 
 # local env files
 .env.local
