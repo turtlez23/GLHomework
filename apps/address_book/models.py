@@ -43,8 +43,7 @@ class AddressEntry(models.Model):
 class FavouriteEntryManager(models.Manager):
   """Favourite book manager
   """
-  def check_unique(self):
-    pass
+  pass
 
 
 class FavouriteEntry(models.Model):

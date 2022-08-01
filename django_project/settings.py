@@ -51,7 +51,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'apps.address_book.logger.SqlLogsMiddleware',
+    'apps.address_book.logger.ErrorLogsMiddleware',    
 ]
+
 
 ROOT_URLCONF = 'django_project.urls'
 
@@ -72,7 +75,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'django_project.wsgi.application'
+# WSGI_APPLICATION = 'django_project.wsgi.application'
 
 
 # Database
@@ -165,4 +168,4 @@ ABOUT_PAGE_TITLE = 'About adddress book'
 
 
 #LOGGER PARAMS
-LOGS_DIRECTORY_PATH = BASE_DIR.joinpath('loggs')
+LOGS_DIRECTORY_PATH = BASE_DIR.joinpath('logs')

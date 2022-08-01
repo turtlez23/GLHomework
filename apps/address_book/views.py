@@ -1,10 +1,8 @@
 from typing import Dict, Any
 
 from django.conf import settings
-from django.http import HttpRequest, QueryDict
 from django.shortcuts import render
 from django.views.generic import TemplateView
-from requests import delete
 from rest_framework.response import Response
 
 from rest_framework.viewsets import ModelViewSet
@@ -98,7 +96,6 @@ class AddressEntryViewSet(AuthentificationModelViewSet):
 
     response = super().create(request, *args, **kwargs)
 
-    # tutaj bedzie obsługa błędu
     # obsługa favourite
     if request.data.get("add_to_favourite"):
       FavouriteEntry(user=request.user, address_entry=AddressEntry(id=response.data.get("id"))).save()
@@ -106,16 +103,14 @@ class AddressEntryViewSet(AuthentificationModelViewSet):
 
   @atomic
   def update(self, request, *args, **kwargs):
-
     #sprawdzenie czy user jest właścicielem
     if request.data.get("user") !=  request.user.pk:
       return self.get_bad_owner_request()
 
     response = super().update(request, *args, **kwargs)
     
-    # tutaj bedzie obsługa błędu
     # obsługa favourite
-    favEntry = FavouriteEntry.objects.all().filter(user=request.user, address_entry=response.data.get("id")).first()
+    favEntry = FavouriteEntry.objects.filter(user=request.user, address_entry=response.data.get("id")).first()
     if request.data.get("add_to_favourite"):
       if not favEntry:
         FavouriteEntry(user=request.user, address_entry=AddressEntry(id=response.data.get("id"))).save()
@@ -126,28 +121,18 @@ class AddressEntryViewSet(AuthentificationModelViewSet):
 
   @atomic
   def destroy(self, request, *args, **kwargs):
-
     instance = self.get_object()
     if instance.share == AddressEntry.PUBLIC_SHARE:
       instance.update(user=None)
       # delete entries for current user
-      FavouriteEntry.objects.all().filter(user=request.user, address_entry=instance.pk).delete()
+      FavouriteEntry.objects.filter(user=request.user, address_entry=instance.pk).delete()
 
       return Response(status=status.HTTP_204_NO_CONTENT)
 
     # delete all private entries
-    FavouriteEntry.objects.all().filter(address_entry=instance.pk).delete()
+    FavouriteEntry.objects.filter(address_entry=instance.pk).delete()
 
     return super().destroy(request, *args, **kwargs)
-
-
-    # # obsługa favourite
-    # # delete all private entries
-    # FavouriteEntry.objects.all().filter(user=request.user, address_entry__share=AddressEntry.PRIVATE_SHARE).delete()
-
-    # # change user owner to None
-    # AddressEntry.objects.all().filter(user=request.user, address_entry__share=AddressEntry.PUBLIC_SHARE).update(user=None)
-
 
 class FavouriteEntryViewSet(AuthentificationModelViewSet):
   """Views for favourite address entry
