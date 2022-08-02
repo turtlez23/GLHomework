@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'rest_framework',
     'apps.address_book',
+    'rest_framework_swagger',
 ]
 
 MIDDLEWARE = [
@@ -68,6 +69,9 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            'libraries': {  
+                'staticfiles': 'django.templatetags.static',
+            },
         },
     },
 ]
@@ -142,13 +146,15 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
-    ]
+    ],
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema'
 }
 
-# CUSTOM SETTINGS
-# APPS CONFIGURATION
+# CUSTOM SETTINGS:
+# PAGE CONFIGURATION
 ADDRESS_BOOK_TITLE = 'Address book'
 ABOUT_PAGE_TITLE = 'About adddress book'
+ADMIN_SITE_TITLE = 'Address book'
 
 #LOGGER PARAMS
 LOGS_DIRECTORY_PATH = BASE_DIR.joinpath('logs')

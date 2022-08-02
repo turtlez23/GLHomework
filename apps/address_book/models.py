@@ -1,15 +1,17 @@
+"""Address book application database models
+"""
 from django.db import models
 from django.contrib.auth.models import User
 
 
 class AddressEntryManager(models.Manager):
-  """Address book manager
+  """Address entry manager
   """
   pass
 
 
 class AddressEntry(models.Model):
-  """Address book model
+  """Address book db model
   """
   PUBLIC_SHARE = 'public'
   PRIVATE_SHARE = 'private'
@@ -40,19 +42,19 @@ class AddressEntry(models.Model):
     return f'{self.pk} {self.name} {self.lastname} {self.email} {self.company}'
 
 
-class FavouriteEntryManager(models.Manager):
-  """Favourite book manager
+class FavoriteEntryManager(models.Manager):
+  """Favorite entry manager
   """
   pass
 
 
-class FavouriteEntry(models.Model):
-  """Favourite book model
+class FavoriteEntry(models.Model):
+  """Favorite book db model
   """
   user = models.ForeignKey(User, on_delete=models.PROTECT)
   address_entry = models.ForeignKey(AddressEntry, on_delete=models.PROTECT, verbose_name='address entry')
 
-  objects = FavouriteEntryManager()
+  objects = FavoriteEntryManager()
 
   class Meta:
     constraints = [

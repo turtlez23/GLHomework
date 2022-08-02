@@ -1,31 +1,32 @@
+"""Address book application rest framework serializers
+"""
 from django.contrib.auth.models import User
 
 from rest_framework import serializers
 
-from apps.address_book.models import AddressEntry, FavouriteEntry
+from apps.address_book.models import AddressEntry, FavoriteEntry
   
 
 class AddressEntrySerializer(serializers.ModelSerializer):
-  """Address entry serializer with extra params:
-  add_to_favourite - check if address entry has to save to favourite db table.
+  """Address entry serializer with extra param: add_to_favorite - if True then save entry to favorite table.
   """
-  add_to_favourite = serializers.BooleanField(read_only=True, default=False)
+  add_to_favorite = serializers.BooleanField(read_only=True, default=False)
 
   class Meta:
     model = AddressEntry
     fields = '__all__'
   
 
-class FavouriteEntrySerializer(serializers.ModelSerializer):
-  """Favourite entry serializer
+class FavoriteEntrySerializer(serializers.ModelSerializer):
+  """Favorite entry serializer
   """
   class Meta:
-    model = FavouriteEntry
+    model = FavoriteEntry
     fields = '__all__'
 
 
 class UserDataSerializer(serializers.ModelSerializer):
-  """Favourite entry serializer
+  """User data serializer
   """
   class Meta:
     model = User
@@ -37,17 +38,13 @@ class UserDataSerializer(serializers.ModelSerializer):
 
 
 class PasswordSerializer(serializers.ModelSerializer):
-	"""Serializer webservices - User - edycja hasła użytkownika
-	Pozwala na walidację, organizację przesyłanych danych oraz komunikaty zwrotne dla webservices
-
-	Args:
-		serializers (serializers.ModelSerializer): Serializer oparty na modelu danych
+	"""Password serializer used for password change by account owner
 	"""
-	oldPassword = serializers.CharField(required=False) # stare hasło
+	old_password = serializers.CharField(required=False) # stare hasło
 	class Meta:
 		model = User
-		fields = ('password', 'oldPassword')
+		fields = ('password', 'old_password')
 		extra_kwargs = {
       'password': {'write_only': True},
-      'oldPassword': {'write_only': True}
+      'old_password': {'write_only': True}
     }

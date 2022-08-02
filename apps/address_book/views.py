@@ -1,3 +1,6 @@
+"""Address book application views
+"""
+
 from typing import Dict, Any
 
 from django.conf import settings
@@ -19,12 +22,12 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.filters import OrderingFilter, BaseFilterBackend
 
-from apps.address_book.models import AddressEntry, FavouriteEntry
-from apps.address_book.serializers import AddressEntrySerializer, FavouriteEntrySerializer, UserDataSerializer, PasswordSerializer
+from apps.address_book.models import AddressEntry, FavoriteEntry
+from apps.address_book.serializers import AddressEntrySerializer, FavoriteEntrySerializer, UserDataSerializer, PasswordSerializer
 
 
 def home_page(request):
-  """Home page view implemented by method with request param
+  """Home page view implemented by method with request
 
   Args:
       request (HttpRequest): http request
@@ -34,14 +37,16 @@ def home_page(request):
   """
   return render(request, "address_book/home.html", {'title': settings.ADDRESS_BOOK_TITLE})
 
-class AuthentificationModelViewSet(ModelViewSet):
-    authentication_classes = [SessionAuthentication, BasicAuthentication]
-    permission_classes = [IsAuthenticated]
+class AuthentificatedModelViewSet(ModelViewSet):
+  """ModelViev set with authentificaton and permission configuration
+  """
+  authentication_classes = [SessionAuthentication, BasicAuthentication]
+  permission_classes = [IsAuthenticated]
 
 class AboutView(TemplateView):
   """Abaut page view implemented by TemplateView
   """
-  template_name = "address_book/abaut.html"
+  template_name = "address_book/about.html"
 
   def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
     return {'title': settings.ABOUT_PAGE_TITLE}
@@ -49,7 +54,7 @@ class AboutView(TemplateView):
 
 class IsUserFilterBackend(BaseFilterBackend):
   """
-  Filter that only allows users to see their own objects.
+  Filter that only allows users to see their own objects
   """
   def filter_queryset(self, request, queryset, view):
       return queryset.filter(user=request.user)
@@ -57,13 +62,14 @@ class IsUserFilterBackend(BaseFilterBackend):
 
 class IsAddressAllowedFilterBackend(IsUserFilterBackend):
   """
-  Filter that only owner or address entry has no user but the entry has to be a public to see their own objects.
+  Filter that only allows users to see their own objects 
+  or address entry which has no owner if the entry has to be a public
   """
   def filter_queryset(self, request, queryset, view):
       return queryset.filter(Q(user=request.user) | Q(share=AddressEntry.PUBLIC_SHARE))
 
 
-class AddressEntryViewSet(AuthentificationModelViewSet):
+class AddressEntryViewSet(AuthentificatedModelViewSet):
   """Views for address entry
   """
   queryset = AddressEntry.objects.all()
@@ -75,68 +81,118 @@ class AddressEntryViewSet(AuthentificationModelViewSet):
   filterset_fields = ['name', 'lastname', 'middlename', 'nickname', 'phone', 'mobile_phone', 'email', 'company', 'position']
 
   def get_bad_owner_request(self):
+    """Get request when objects does not belong to the current user
+
+    Returns:
+        Response: http response
+    """
     return Response({
         "user": [
             "You cannot change other user address entry"
         ]
     }, status=status.HTTP_400_BAD_REQUEST)
+  
+  def check_owner(self, request):
+    """Check owner
+
+    Args:
+        request (Request): http request
+
+    Returns:
+        bool: True if object belong to user
+    """
+    return request.data.get("user") !=  request.user.pk
+  
+  def add_to_favorites(self, user, address_entry_id):
+    FavoriteEntry(user=user, address_entry=AddressEntry(id=address_entry_id)).save()
+
+  def update_favorite_entry(self, request, address_entry_id):
+    """Update favorite entry
+    add_to_favorite is True and favorite exist doing nothing
+    add_to_favorite is True and favorite didn't exist add to favorite
+    add_to_favorite is False and favorite exist delete favorite entry
+    add_to_favorite is False and favorite didn't exist doing nothing
+    
+    Args:
+        request (Request): http request
+        address_entry_id (int): address entry id
+    """
+    favoriteEntry = FavoriteEntry.objects.filter(user=request.user, address_entry=address_entry_id).first()
+    if request.data.get("add_to_favorite"):
+      if not favoriteEntry:
+        FavoriteEntry(user=request.user, address_entry=AddressEntry(id=address_entry_id)).save()
+    elif favoriteEntry:
+      favoriteEntry.delete()
+
 
   @atomic
   def create(self, request, *args, **kwargs):
-    """Save object to db and if add_to_favourite param is true method adding address entry to favouite using logged user and id from new address entry object
+    """Save object to db and if add_to_favorite param is true than method adding address entry to favorite table, using logged user and id from saved entry object
 
     Returns:
         Response: Http response
     """
-    #sprawdzenie czy user jest właścicielem
-    if request.data.get("user") !=  request.user.pk:
+    if self.check_owner(request):
       return self.get_bad_owner_request()
 
     response = super().create(request, *args, **kwargs)
 
-    # obsługa favourite
-    if request.data.get("add_to_favourite"):
-      FavouriteEntry(user=request.user, address_entry=AddressEntry(id=response.data.get("id"))).save()
+    # check favorite entries
+    if request.data.get("add_to_favorite"):
+      self.add_to_favorites(request.user, response.data.get("id"))
     return response
 
   @atomic
   def update(self, request, *args, **kwargs):
-    #sprawdzenie czy user jest właścicielem
-    if request.data.get("user") !=  request.user.pk:
+    """Update object,
+    add_to_favorite param is true - method adding address entry to favorite table if not exist,
+    add_to_favorite is equal false - method delete entry from favorite if exist
+
+    Returns:
+        Response: Http response
+    """
+    if self.check_owner(request):
       return self.get_bad_owner_request()
 
     response = super().update(request, *args, **kwargs)
     
-    # obsługa favourite
-    favEntry = FavouriteEntry.objects.filter(user=request.user, address_entry=response.data.get("id")).first()
-    if request.data.get("add_to_favourite"):
-      if not favEntry:
-        FavouriteEntry(user=request.user, address_entry=AddressEntry(id=response.data.get("id"))).save()
-    elif favEntry:
-      favEntry.delete()
+    self.update_favorite_entry(request, response.data.get("id"))
 
     return response
 
   @atomic
   def destroy(self, request, *args, **kwargs):
+    """Destroy address entry and favorite entries
+    address entry is public - change user to null and delete current user favorite entry
+    address entry is private - delete favorite entry
+    next delete object
+
+    Args:
+        request (Request): http request
+
+    Returns:
+        Response: http response
+    """
     instance = self.get_object()
     if instance.share == AddressEntry.PUBLIC_SHARE:
+      # change object owner
       instance.update(user=None)
       # delete entries for current user
-      FavouriteEntry.objects.filter(user=request.user, address_entry=instance.pk).delete()
+      FavoriteEntry.objects.filter(user=request.user, address_entry=instance.pk).delete()
 
       return Response(status=status.HTTP_204_NO_CONTENT)
 
     # delete all private entries
-    FavouriteEntry.objects.filter(address_entry=instance.pk).delete()
-
+    FavoriteEntry.objects.filter(address_entry=instance.pk).delete()
+    # delete address entry
     return super().destroy(request, *args, **kwargs)
 
-class FavouriteEntryViewSet(AuthentificationModelViewSet):
-  """Views for favourite address entry
+
+class FavoriteEntryViewSet(AuthentificatedModelViewSet):
+  """Views for favorite address entry
   """
-  queryset = FavouriteEntry.objects.all().order_by('user__last_name')
-  serializer_class = FavouriteEntrySerializer
+  queryset = FavoriteEntry.objects.all().order_by('user__last_name')
+  serializer_class = FavoriteEntrySerializer
   http_method_names = ['head', 'get', 'post', 'delete']
   filter_backends = [DjangoFilterBackend, IsUserFilterBackend]
   
@@ -152,40 +208,46 @@ class FavouriteEntryViewSet(AuthentificationModelViewSet):
     return self.queryset
 
 
-  class UserDataViewSet(AuthentificationModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserDataSerializer
-    http_method_names = ['head', 'get', 'put']
+class UserDataViewSet(AuthentificatedModelViewSet):
+  """User data view set for changing personal data and password
+  """
+  queryset = User.objects.all()
+  serializer_class = UserDataSerializer
+  http_method_names = ['head', 'get', 'put']
 
   def list(self, request, *args, **kwargs):
     return Response({
       "detail": "Method \"GET\" for list not allowed."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
   def get_queryset(self):
-    f"""Method with optional filter for: address_entry
+    f"""Method with optional filter for address_entry
 
     Returns:
         QuerySet: query set with filters
     """
-    self.queryset.get(id=self.request.user.pk)
+    self.queryset.filter(id=self.request.user.pk)
     return self.queryset
 
+  def check_old_password(self, request):
+    return not request.user.check_password(request.data.get("old_password"))
     
   @action(detail=True, methods=['put'], url_name='password')  
   def password(self, request, pk):
-    """Edycja hasła - id uzytkownika pobrane z request, nalezy podać stare hasło
+    """Change current user password,
+    User has to send old password for authentyfication 
 
     Args:
-      request (HttpRequest): żądanie
+        request (HttpRequest): http request
+
     Returns:
-      Response: odpowiedź w formacie Response(json)
+        Response: odpowiedź w formacie Response(json)
     """
     user = request.user
-    oldPassword = request.data.get("oldPassword")
     password = request.data.get("password")
-    
-    if not request.user.check_password(oldPassword):
+
+    if self.check_old_password(request):
       return Response({'detail':'Invalid username or password.'}, status=status.HTTP_401_UNAUTHORIZED)
+    
     try:
       validate_password(password, user)
     except ValidationError:
