@@ -204,8 +204,9 @@ class FavoriteEntryViewSet(AuthentificatedModelViewSet):
     """
     address_entry = self.request.query_params.get('address_entry')
     if address_entry is not None:
-      self.queryset.filter(address_entry=address_entry)
+      self.queryset = self.queryset.filter(address_entry=address_entry)
     return self.queryset
+
 
 
 class UserDataViewSet(AuthentificatedModelViewSet):
@@ -215,18 +216,41 @@ class UserDataViewSet(AuthentificatedModelViewSet):
   serializer_class = UserDataSerializer
   http_method_names = ['head', 'get', 'put']
 
+  def get_bad_owner_request(self):
+    """Get request when objects does not belong to the current user
+
+    Returns:
+        Response: http response
+    """
+    return Response({
+        "id": [
+            "You cannot change other user data"
+        ]
+    }, status=status.HTTP_400_BAD_REQUEST)
+  
+  def check_owner(self, request):
+    """Check owner
+
+    Args:
+        request (Request): http request
+
+    Returns:
+        bool: True if object belong to user
+    """
+    return request.data.get("id") !=  request.user.pk
+
   def list(self, request, *args, **kwargs):
     return Response({
       "detail": "Method \"GET\" for list not allowed."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
   def get_queryset(self):
-    f"""Method with optional filter for address_entry
+    f"""Method with user_id filter for address_entry
 
     Returns:
         QuerySet: query set with filters
     """
-    self.queryset.filter(id=self.request.user.pk)
-    return self.queryset
+    queryset = self.queryset.filter(id=self.request.user.pk)
+    return queryset
 
   def check_old_password(self, request):
     return not request.user.check_password(request.data.get("old_password"))

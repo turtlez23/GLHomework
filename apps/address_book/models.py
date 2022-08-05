@@ -48,6 +48,7 @@ class FavoriteEntryManager(models.Manager):
   pass
 
 
+
 class FavoriteEntry(models.Model):
   """Favorite book db model
   """
